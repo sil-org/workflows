@@ -4,8 +4,9 @@ on:
   workflow_call:
     inputs:
       terraform-version:
-        required: true
-	type: string
+        required: false
+        type: string
+        default: latest
 
 jobs:
   terraform:
@@ -16,7 +17,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
       with:
-      	terraform_version: ${{ inputs.terraform-version }}
+        terraform_version: ${{ inputs.terraform-version }}
     - run: terraform fmt -check -diff -recursive
     - run: terraform init -backend=false
     - run: terraform validate
