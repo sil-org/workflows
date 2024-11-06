@@ -1,2 +1,3 @@
-# template-public
-general template for public repositories
+# workflows
+
+Shared workflows for GitHub Actions
