@@ -1,0 +1,22 @@
+name: 'Terraform'
+
+on:
+  workflow_call:
+    inputs:
+      terraform-version:
+        required: true
+	type: string
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: hashicorp/setup-terraform@v3
+      with:
+      	terraform_version: ${{ inputs.terraform-version }}
+    - run: terraform fmt -check -diff -recursive
+    - run: terraform init -backend=false
+    - run: terraform validate
