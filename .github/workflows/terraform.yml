@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: latest
+      directory:
+        required: false
+        type: string
+        default: '.'
 
 jobs:
   terraform:
@@ -18,6 +22,6 @@ jobs:
     - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ${{ inputs.terraform-version }}
-    - run: terraform fmt -check -diff -recursive
-    - run: terraform init -backend=false
-    - run: terraform validate
+    - run: terraform -chdir=${{ inputs.directory }} fmt -check -diff -recursive
+    - run: terraform -chdir=${{ inputs.directory }} init -backend=false
+    - run: terraform -chdir=${{ inputs.directory }} validate
