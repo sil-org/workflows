@@ -24,7 +24,7 @@ jobs:
       with:
         terraform_version: ${{ inputs.terraform-version }}
     - uses: terraform-linters/setup-tflint@v4
-    - run: tflint --recursive --chdir=${{ inputs.directory }} -f compact --recursive
+    - run: tflint --recursive --chdir=${{ inputs.directory }} -f compact
     - run: terraform -chdir=${{ inputs.directory }} fmt -check -diff -recursive
     - run: terraform -chdir=${{ inputs.directory }} init -backend=false
     - run: terraform -chdir=${{ inputs.directory }} validate
