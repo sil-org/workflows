@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: '.'
+      test-dir:
+        required: false
+        type: string
+        default: ''
 
 jobs:
   terraform:
@@ -26,5 +30,5 @@ jobs:
     - uses: terraform-linters/setup-tflint@v4
     - run: tflint --recursive --chdir=${{ inputs.directory }} -f compact
     - run: terraform -chdir=${{ inputs.directory }} fmt -check -diff -recursive
-    - run: terraform -chdir=${{ inputs.directory }} init -backend=false
-    - run: terraform -chdir=${{ inputs.directory }} validate
+    - run: terraform -chdir=${{ inputs.test-dir || inputs.directory }} init -backend=false
+    - run: terraform -chdir=${{ inputs.test-dir || inputs.directory }} validate
