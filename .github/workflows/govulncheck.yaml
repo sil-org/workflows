@@ -1,0 +1,120 @@
+name: govulncheck
+on:
+  workflow_call:
+    inputs:
+      # setup-go inputs
+      cache:
+        description: 'Used to specify whether Go caching is needed. Set to true, if you would like to enable caching.'
+        required: false
+        default: true
+        type: boolean
+      cache-dependency-path:
+        description: 'Used to specify the path to a dependency file (go.sum)'
+        required: false
+        default: ''
+        type: string
+      check-latest:
+        description: 'Set to true to check for the latest Go version that satisfies the version spec'
+        required: false
+        default: true
+        type: boolean
+      go-version-file:
+        description: 'Path to the go.mod or go.work file.'
+        required: false
+        type: string
+      go-version-input:
+        description: 'Version of Go to use for govulncheck'
+        required: false
+        default: 'stable'
+        type: string
+
+      # govulncheck inputs
+      go-package:
+        description: 'Go package to scan with govulncheck'
+        required: false
+        default: './...'
+        type: string
+      work-dir:
+        description: 'Directory in which to run govulncheck'
+        required: false
+        default: '.'
+        type: string
+
+      # aws inputs
+      aws-region:
+        description: 'AWS region to use for sending alert email'
+        required: false
+        default: 'us-east-1'
+        type: string
+      aws-role:
+        description: 'AWS role to use for sending alert email'
+        required: false
+        type: string
+      from-email:
+        description: 'Email address to use in the From field when sending alert email'
+        required: true
+        type: string
+      to-email:
+        description: 'Email address to use in the To field when sending alert email'
+        required: true
+        type: string
+
+jobs:
+  govulncheck:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(vars.DEFAULT_JOB_TIMEOUT_MINUTES) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.go-version-input }}
+          check-latest: ${{ inputs.check-latest }}
+          go-version-file: ${{ inputs.go-version-file }}
+          cache: ${{ inputs.cache }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+      - name: govulncheck
+        id: govulncheck
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@latest -C ${{ inputs.work-dir }} ${{ inputs.go-package }}
+
+      - name: Configure AWS credentials
+        if: failure()
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ inputs.aws-role }}
+
+      - name: Send alert on failure
+        if: failure()
+        env:
+          FROM: ${{ inputs.from-email }}
+          TO: ${{ inputs.to-email }}
+          REPO: ${{ github.event.repository.name }}
+          SUBJECT: '$REPO govulncheck alert'
+          BODY: |
+            <h3>$REPO govulncheck alert</h3>
+            <p>
+              The govulncheck scan on sil-org/$REPO has failed, possibly indicating a vulnerability.
+            </p>
+            <pre>
+              ${{ steps.govulncheck.outputs.stdout }}
+            </pre>
+        run: |
+          jq -n --arg to "$TO" '{ToAddresses: [$to]}' > destination.json
+
+          jq -n \
+            --arg subject "$SUBJECT" \
+            --arg body "$BODY" \
+            '{
+              Subject: {Data: $subject, Charset: "UTF-8"},
+              Body: {
+                Html: {Data: $body, Charset: "UTF-8"}
+              }
+            }' > message.json
+
+          aws ses send-email --from "${FROM}" --destination file://destination.json --message file://message.json
