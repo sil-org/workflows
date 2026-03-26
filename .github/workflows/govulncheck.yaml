@@ -52,11 +52,11 @@ on:
         type: string
       from-email:
         description: 'Email address to use in the From field when sending alert email'
-        required: true
+        required: false
         type: string
       to-email:
         description: 'Email address to use in the To field when sending alert email'
-        required: true
+        required: false
         type: string
 
 jobs:
@@ -90,7 +90,7 @@ jobs:
           role-to-assume: ${{ inputs.aws-role }}
 
       - name: Send alert on failure
-        if: failure()
+        if: failure() && inputs.from-email && inputs.to-email
         env:
           FROM: ${{ inputs.from-email }}
           TO: ${{ inputs.to-email }}
