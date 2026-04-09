@@ -79,8 +79,14 @@ jobs:
 
       - name: govulncheck
         id: govulncheck
-        run: |
-          go run golang.org/x/vuln/cmd/govulncheck@latest -C ${{ inputs.work-dir }} ${{ inputs.go-package }}
+        shell: bash
+        run: |         
+          out="$(go run golang.org/x/vuln/cmd/govulncheck@latest -C "${{ inputs.work-dir }}" "${{ inputs.go-package }}" 2>&1)"          
+          {
+            echo 'report<<EOF'
+            echo "$out"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS credentials
         if: failure()
@@ -91,20 +97,19 @@ jobs:
 
       - name: Send alert on failure
         if: failure() && inputs.from-email && inputs.to-email
+        shell: bash
         env:
           FROM: ${{ inputs.from-email }}
           TO: ${{ inputs.to-email }}
           REPO: ${{ github.event.repository.name }}
-          SUBJECT: '$REPO govulncheck alert'
-          BODY: |
-            <h3>$REPO govulncheck alert</h3>
-            <p>
-              The govulncheck scan on sil-org/$REPO has failed, possibly indicating a vulnerability.
-            </p>
-            <pre>
-              ${{ steps.govulncheck.outputs.stdout }}
-            </pre>
+          REPORT: ${{ steps.govulncheck.outputs.report }}
+          SUBJECT: ${{ github.event.repository.name }} govulncheck alert
         run: |
+          BODY="The govulncheck scan on sil-org/${REPO} has failed, possibly indicating a vulnerability.
+          
+          ${REPORT}
+          "
+
           jq -n --arg to "$TO" '{ToAddresses: [$to]}' > destination.json
 
           jq -n \
@@ -112,9 +117,7 @@ jobs:
             --arg body "$BODY" \
             '{
               Subject: {Data: $subject, Charset: "UTF-8"},
-              Body: {
-                Html: {Data: $body, Charset: "UTF-8"}
-              }
+              Body: { Text: {Data: $body, Charset: "UTF-8"} }
             }' > message.json
 
-          aws ses send-email --from "${FROM}" --destination file://destination.json --message file://message.json
+          aws ses send-email --from "$FROM" --destination file://destination.json --message file://message.json
