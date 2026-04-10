@@ -82,13 +82,14 @@ jobs:
         shell: bash
         run: |
           set +e
-          set -x
           out="$(go run golang.org/x/vuln/cmd/govulncheck@latest -C "${{ inputs.work-dir }}" "${{ inputs.go-package }}")"
           exit_code=$?
           {
-              echo 'report<<EOF 
-              echo "$out"
-              echo 'EOF'
+            echo 'report<<EOF'
+            echo 'govulncheck report'
+            echo '------------------'
+            echo "$out"
+            echo 'EOF'
           } >> "$GITHUB_OUTPUT"
           exit $exit_code
 
