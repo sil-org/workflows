@@ -81,13 +81,16 @@ jobs:
         id: govulncheck
         shell: bash
         run: |
-          set -x 
-          go run golang.org/x/vuln/cmd/govulncheck@latest -C "${{ inputs.work-dir }}" "${{ inputs.go-package }}"
-          out="$(go run golang.org/x/vuln/cmd/govulncheck@latest -C "${{ inputs.work-dir }}" "${{ inputs.go-package }}" 2>&1)"          
-          echo "$out"
-          echo 'report<<EOF' >> "$GITHUB_OUTPUT"
-          echo "$out" >> "$GITHUB_OUTPUT"
-          echo 'EOF' >> "$GITHUB_OUTPUT"
+          set +e
+          set -x
+          out="$(go run golang.org/x/vuln/cmd/govulncheck@latest -C "${{ inputs.work-dir }}" "${{ inputs.go-package }}")"
+          exit_code=$?
+          {
+              echo 'report<<EOF 
+              echo "$out"
+              echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          exit $exit_code
 
 #      - name: Configure AWS credentials
 #        if: failure()
