@@ -93,36 +93,36 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           exit $exit_code
 
-#      - name: Configure AWS credentials
-#        if: failure()
-#        uses: aws-actions/configure-aws-credentials@v6
-#        with:
-#          aws-region: ${{ inputs.aws-region }}
-#          role-to-assume: ${{ inputs.aws-role }}
-#
-#      - name: Send alert on failure
-#        if: failure() && inputs.from-email && inputs.to-email
-#        shell: bash
-#        env:
-#          FROM: ${{ inputs.from-email }}
-#          TO: ${{ inputs.to-email }}
-#          REPO: ${{ github.event.repository.name }}
-#          REPORT: ${{ steps.govulncheck.outputs.report }}
-#          SUBJECT: ${{ github.event.repository.name }} govulncheck alert
-#        run: |
-#          BODY="The govulncheck scan on sil-org/${REPO} has failed, possibly indicating a vulnerability.
-#
-#          ${REPORT}
-#          "
-#
-#          jq -n --arg to "$TO" '{ToAddresses: [$to]}' > destination.json
-#
-#          jq -n \
-#            --arg subject "$SUBJECT" \
-#            --arg body "$BODY" \
-#            '{
-#              Subject: {Data: $subject, Charset: "UTF-8"},
-#              Body: { Text: {Data: $body, Charset: "UTF-8"} }
-#            }' > message.json
-#
-#          aws ses send-email --from "$FROM" --destination file://destination.json --message file://message.json
+      - name: Configure AWS credentials
+        if: failure()
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ inputs.aws-role }}
+
+      - name: Send alert on failure
+        if: failure() && inputs.from-email && inputs.to-email
+        shell: bash
+        env:
+          FROM: ${{ inputs.from-email }}
+          TO: ${{ inputs.to-email }}
+          REPO: ${{ github.event.repository.name }}
+          REPORT: ${{ steps.govulncheck.outputs.report }}
+          SUBJECT: ${{ github.event.repository.name }} govulncheck alert
+        run: |
+          BODY="The govulncheck scan on sil-org/${REPO} has failed, possibly indicating a vulnerability.
+
+          ${REPORT}
+          "
+
+          jq -n --arg to "$TO" '{ToAddresses: [$to]}' > destination.json
+
+          jq -n \
+            --arg subject "$SUBJECT" \
+            --arg body "$BODY" \
+            '{
+              Subject: {Data: $subject, Charset: "UTF-8"},
+              Body: { Text: {Data: $body, Charset: "UTF-8"} }
+            }' > message.json
+
+          aws ses send-email --from "$FROM" --destination file://destination.json --message file://message.json
