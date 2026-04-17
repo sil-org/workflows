@@ -91,7 +91,7 @@ jobs:
             echo "$out"
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-          echo "$report" >> $GITHUB_STEP_SUMMARY
+          echo "$out" >> $GITHUB_STEP_SUMMARY
           exit $exit_code
 
       - name: Configure AWS credentials
