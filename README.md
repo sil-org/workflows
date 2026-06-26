@@ -9,6 +9,7 @@ Static code analysis for Terraform. Performs the following checks:
 - terraform fmt -check
 - terraform validate
 - tflint
+- trivy config -- scans Terraform for security misconfigurations (report-only; does not fail the build)
 
 Inputs:
 
