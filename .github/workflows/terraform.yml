@@ -28,7 +28,7 @@ jobs:
       with:
         terraform_version: ${{ inputs.terraform-version }}
     - uses: terraform-linters/setup-tflint@v6
-    - uses: aquasecurity/setup-trivy@v0.3.1
+    - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
     - run: tflint --recursive --chdir=${{ inputs.directory }} -f compact
     - run: trivy config ${{ inputs.directory }}
     - run: terraform -chdir=${{ inputs.directory }} fmt -check -diff -recursive
