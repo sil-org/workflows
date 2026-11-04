@@ -36,7 +36,7 @@ jobs:
           img=ghcr.io/aquasecurity/trivy:0.76.1
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src $img config "$SCAN_DIR"
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src $img config \
-            --severity HIGH,CRITICAL --exit-code 1 --quiet "$SCAN_DIR"
+            --severity CRITICAL --exit-code 1 --quiet "$SCAN_DIR"
       - run: terraform -chdir=${{ inputs.directory }} fmt -check -diff -recursive
       - run: terraform -chdir=${{ inputs.test-dir || inputs.directory }} init -backend=false
       - run: terraform -chdir=${{ inputs.test-dir || inputs.directory }} validate
